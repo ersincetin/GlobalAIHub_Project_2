@@ -9,7 +9,7 @@ pandas.set_option('display.max_columns', None)
 pandas.set_option('display.max_rows', None)
 select_items = {
     1: "Which language of long terms ? :  ",
-    2: "",
+    2: "Date range of Genre Type : ",
     3: "Films of English Record at BIGGEST IMBD Score : ",
     4: "\"Hindi\" Language Records' average of \"runtime\" : ",
     5: "\"Genre Column Details : \"",
@@ -18,10 +18,10 @@ select_items = {
     8: "",
     9: "Most Good IMDB Score 10 Films of Genre : ",
     10: "Most Good Runtimes(sn) 10 Films : ",
-    11: "",
-    12: "",
+    11: "which year of most films record : ",
+    12: "Which language of lowest imdb score : (Note:all average then lowest)",
     13: "Which year of most sum \"runtimes\" : ",
-    14: "",
+    14: "Each Language of max use Genre Type :",
     15: ""
 }
 
@@ -121,9 +121,91 @@ def most_good_runtime(step):
     pyplot.show()
 
 
+def daterange_genre_type_datas(start_date, end_date, genre_type):
+    new_dataframe = numpy.array(dataframe.loc[(pandas.to_datetime(dataframe["Premiere"]) > start_date) & (
+            pandas.to_datetime(dataframe["Premiere"]) <= end_date) & (dataframe["Genre"] == genre_type)])
+    x = ["2019", "2020"]
+    films_2019, films_2020 = 0, 0
+    for item in new_dataframe:
+        if item[2].find("-19") >= 0:
+            films_2019 += 1
+        elif item[2].find("-20") >= 0:
+            films_2020 += 1
+        else:
+            continue
+    pyplot.bar(x, [films_2019, films_2020], color="maroon", width=0.3)
+    pyplot.title("Most Sum Runtime of Yearly")
+    pyplot.show()
+
+
 def most_sum_runtime_of_yearly():
-    date_times_values = dataframe.query("Premiere == 19-Agu-2019")
-    print(date_times_values)
+    years = numpy.array(pandas.DatetimeIndex(dataframe["Premiere"]).year.value_counts().keys())
+    biggest_runtime, sumRuntime, year_value = 0, 0, 0
+    for year in years:
+        sumRuntime = (dataframe.loc[(pandas.DatetimeIndex(dataframe["Premiere"]).year == year)])["Runtime"].sum()
+        if biggest_runtime < sumRuntime:
+            biggest_runtime = sumRuntime
+            year_value = year
+    print(f"The {year_value} is max sum runtime record.({biggest_runtime}sn)")
+
+
+def each_language_of_genre_types():
+    lang_items = list(dataframe["Language"].value_counts().keys())
+    for item in list(dataframe["Language"].value_counts().keys()):
+        if item.find("/") > 0:
+            for language in item.split("/"):
+                if language in lang_items:
+                    continue
+                else:
+                    lang_items.append(language)
+            lang_items.remove(item)
+    for item in lang_items:
+        print(
+            f"{item} use most genre {numpy.array(dataframe.loc[lambda x: x['Language'].str.contains(item)]['Genre'].value_counts())[0]}.",
+            end="\n\n")
+
+
+def which_year_of_most_films():
+    years = numpy.array(pandas.DatetimeIndex(dataframe["Premiere"]).year.value_counts().keys())
+    biggest_films_count, year_item = 0, 0
+    x, y = [], []
+    for year in years:
+        count = (dataframe.loc[(pandas.DatetimeIndex(dataframe["Premiere"]).year == year)])["Title"].count()
+        if biggest_films_count < count:
+            biggest_films_count = count
+            year_item = year
+        x.append(year)
+        y.append(count)
+
+    print(
+        f"{year_item} record {biggest_films_count} most films.", end="\n\n")
+    pyplot.bar(x, y, color="maroon", width=0.3)
+    pyplot.title("Which year of Most Films Record")
+    pyplot.show()
+
+
+def which_language_lowest_imdb_score():
+    lang_items = list(dataframe["Language"].value_counts().keys())
+    for item in list(dataframe["Language"].value_counts().keys()):
+        if item.find("/") > 0:
+            for language in item.split("/"):
+                if language in lang_items:
+                    continue
+                else:
+                    lang_items.append(language)
+            lang_items.remove(item)
+    x, y = [], []
+    imdb_score_sum = 0.0
+    for lang in lang_items:
+        x.append(lang)
+        imdb_score_sum += float(dataframe.loc[lambda l: l['Language'].str.contains(lang)]['IMDB Score'].mean())
+    imdb_score_average = imdb_score_sum / len(lang_items)
+    for lang in lang_items:
+        y.append(dataframe.loc[lambda l: l['Language'].str.contains(lang) & (l["IMDB Score"] < imdb_score_average)][
+                     'IMDB Score'].mean())
+    pyplot.bar(x, y, color="maroon", width=0.3)
+    pyplot.title("Which language lowest imdb score")
+    pyplot.show()
 
 
 def select_step():
@@ -132,6 +214,8 @@ def select_step():
     item_id = int(input("Please,Choose one : "))
     if item_id == 1:
         search_long_term_films()
+    elif item_id == 2:
+        daterange_genre_type_datas("01-2019", "06-2020", "Documentary")
     elif item_id == 3:
         print(films_of_english_record_IMDB())
     elif item_id == 4:
@@ -146,8 +230,14 @@ def select_step():
         most_good_imdb_score_of_genre(10)
     elif item_id == 10:
         most_good_runtime(10)
+    elif item_id == 11:
+        which_year_of_most_films()
+    elif item_id == 12:
+        which_language_lowest_imdb_score()
     elif item_id == 13:
         most_sum_runtime_of_yearly()
+    elif item_id == 14:
+        each_language_of_genre_types()
     else:
         print("dont select")
 
